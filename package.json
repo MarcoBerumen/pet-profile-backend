@@ -1,0 +1,22 @@
+{
+  "name": "pet-profile-backend",
+  "version": "1.0.0",
+  "description": "This is the backend of pet-profile",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcoBerumen/pet-profile-backend.git"
+  },
+  "author": "Marco Berumen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MarcoBerumen/pet-profile-backend/issues"
+  },
+  "homepage": "https://github.com/MarcoBerumen/pet-profile-backend#readme",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
