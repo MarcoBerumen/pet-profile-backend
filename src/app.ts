@@ -6,6 +6,10 @@ import helmet from 'helmet';
 import hpp from 'hpp';
 import { AppError } from './error/AppError';
 import { globalErrorHandler } from './error/globalErrorHandler';
+import { AppRouter } from './router/AppRouter';
+
+//IMPORT ALL CONTROLLERS
+import './controllers';
 
 enum ENVS {
   DEVELOPMENT = 'development',
@@ -30,6 +34,9 @@ app.use(
 );
 app.use(express.json({ limit: '5mb' }));
 app.use(hpp());
+
+//ROUTER
+app.use(AppRouter.instance);
 
 //IF ROUTE NOT FOUND
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
