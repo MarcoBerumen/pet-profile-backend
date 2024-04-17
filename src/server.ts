@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import path from 'path';
-import app from './app';
 
 process.on('uncaughtException', (err: Error): void => {
   console.log('🟥🟥🟥UNCAUGH EXCEPTION!🟥🟥🟥');
@@ -11,6 +11,13 @@ process.on('uncaughtException', (err: Error): void => {
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const PORT = process.env.PORT ?? 4000;
+
+import app from './app';
+
+//DATABASE
+mongoose.connect(process.env.DATABASE_DEV!, {}).then(() => {
+  console.log('DB CONNECTION SUCCESSFULL');
+});
 
 const server = app.listen(PORT, (): void => {
   console.log(`App running on port ${PORT}...`);
