@@ -10,15 +10,13 @@ interface IUserDocument extends mongoose.Document {
   password: string;
   passwordConfirm: string;
   passwordChangedAt: Date;
-  passwordResetToken: string;
-  passwordResetExpires: Date;
   emailConfirmed: boolean;
-  emailConfirmCode: string;
-  codeExpires: Date;
   active: boolean;
+  authChallengeCode?: string | undefined;
+  authCHallengeExpires?: Date | undefined;
 
   generateCodeAuthChallengeAndSendEmail(): void;
-  correctPassword(): boolean;
+  correctPassword(candidatePassword: string, password: string): boolean;
 }
 
 const userSchema = new mongoose.Schema({
@@ -62,15 +60,13 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
   emailConfirmed: {
     type: Boolean,
     default: false,
     select: false,
   },
-  emailConfirmCode: String,
-  codeExpires: Date,
+  authChallengeCode: String,
+  authCHallengeExpires: Date,
   active: {
     type: Boolean,
     default: true,
@@ -96,34 +92,20 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.methods.generateCodeAuthChallengeAndSendEmail = function () {
-  const emailConfirmCode = Math.round(Math.random() * 1000000)
+  const code = Math.round(Math.random() * 1000000)
     .toString()
     .padStart(6, '0');
-  this.emailConfirmCode = emailConfirmCode;
-  this.emailConfirmed = false;
-  this.codeExpires = new Date(Date.now() + 10 * 60 * 1000);
-  Mail.sendConfirmEmailCode(this.email, this.emailConfirmCode);
+  this.authChallengeCode = code;
+  this.authCHallengeExpires = new Date(Date.now() + 10 * 60 * 1000);
+  Mail.sendConfirmEmailCode(this.email, this.authChallengeCode);
   this.save();
 };
 
-// Set emailConfirmPassword to false, generate code and send email
-// userSchema.pre('save', function (next) {
-//   if (!this.isNew || !this.isModified('emailConfirmCode')) return next();
-//   const emailConfirmCode = Math.round(Math.random() * 1000000)
-//     .toString()
-//     .padStart(6, '0');
-//   this.emailConfirmCode = emailConfirmCode;
-//   this.emailConfirmed = false;
-//   this.codeExpires = new Date(Date.now() + 10 * 60 * 1000);
-//   Mail.sendConfirmEmailCode(this.email, this.emailConfirmCode);
-//   return next();
-// });
-
 userSchema.methods.correctPassword = async function (
   candidatePassword: string,
-  userPassword: string
+  password: string
 ) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return await bcrypt.compare(candidatePassword, password);
 };
 
 export const User = mongoose.model<IUserDocument>('User', userSchema);
