@@ -34,7 +34,7 @@ export const Factory = <T>(model: mongoose.Model<T>) => {
   const updateOne = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
       const doc = await model.findByIdAndUpdate(req.params.id, req.body);
-      res.status(203).json({ status: true, pet: doc });
+      res.status(204).json({ status: true, pet: doc });
     };
   };
 
