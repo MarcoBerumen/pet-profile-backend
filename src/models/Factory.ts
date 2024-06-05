@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../error/AppError';
+import { Pet } from './pet/Pet.model';
 
 export const Factory = <T>(model: mongoose.Model<T>) => {
   const deleteOne = () => {
@@ -16,8 +17,32 @@ export const Factory = <T>(model: mongoose.Model<T>) => {
     };
   };
 
+  const create = () => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const newDoc = await model.create({ ...req.body });
+      res.status(201).json({ status: true, pet: newDoc });
+    };
+  };
+
+  const findAll = () => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const docs = await model.find(req.query!);
+      res.status(200).json({ status: true, pet: docs });
+    };
+  };
+
+  const updateOne = () => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const doc = await model.findByIdAndUpdate(req.params.id, req.body);
+      res.status(203).json({ status: true, pet: doc });
+    };
+  };
+
   return {
     deleteOne,
+    create,
+    findAll,
+    updateOne,
   };
 };
 
