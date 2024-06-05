@@ -3,7 +3,7 @@ import { controller } from '../../decorators/controller.decorator';
 import { Delete, Get, Patch, Post } from '../../decorators/routes.decorator';
 import { User } from '../../models/user/User.model';
 import { AppError } from '../../error/AppError';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const signToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
@@ -13,6 +13,46 @@ const signToken = (id: string) => {
 
 @controller('/auth')
 export class AuthController {
+  public static protect = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    let token;
+    // 1) GETTING TOKEN AND CHECK IF ITS THERE
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return next(new AppError('Porfavor incia sesión para tener acceso', 401));
+    }
+
+    //2) VERIFICATION TOKEN
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) return next(new AppError('El usuario ya no existe', 401));
+
+    //4) CHECK IF USER CHANGED PASSWORD AFTER THE JWT WAS ISSUED
+    if (user.changedPasswordAfter(decoded.iat!)) {
+      return next(
+        new AppError(
+          'El usuario recientemente cambio de contraseña! Porfavor inicia sesión nuevamente',
+          401
+        )
+      );
+    }
+
+    //GRANT ACCESS TO PROTECTED ROUTE
+    req.user = user;
+    next();
+  };
+
   @Post('/signup')
   async signup(req: Request, res: Response, next: NextFunction) {
     const newUser = await User.create({ ...req.body });

@@ -17,6 +17,7 @@ interface IUserDocument extends mongoose.Document {
 
   generateCodeAuthChallengeAndSendEmail(): void;
   correctPassword(candidatePassword: string, password: string): boolean;
+  changedPasswordAfter(JWTTimestamp: number): boolean;
 }
 
 const userSchema = new mongoose.Schema({
@@ -106,6 +107,16 @@ userSchema.methods.correctPassword = async function (
   password: string
 ) {
   return await bcrypt.compare(candidatePassword, password);
+};
+
+userSchema.methods.changedPasswordAfter = function (
+  JWTTimestamp: number
+): boolean {
+  if (this.passwordChangedAt) {
+    const changedTimeStamp = +new Date(this.passwordChangedAt) / 1000;
+    return JWTTimestamp < changedTimeStamp;
+  }
+  return false;
 };
 
 export const User = mongoose.model<IUserDocument>('User', userSchema);
