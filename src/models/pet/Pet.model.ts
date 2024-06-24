@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+import { EModels } from '../enumModels';
 
-interface IPetDocument extends mongoose.Document {
+export interface IPetDocument extends mongoose.Document {
   name: string;
   description: string;
   address: string;
@@ -19,13 +20,36 @@ const petSchema = new mongoose.Schema(
       required: [true, 'Please tell us a brief description of your pet'],
     },
     address: {
-      type: String,
+      type: {
+        type: String,
+        default: 'Point',
+        enum: 'Point',
+      },
+      coordinates: [Number],
+      street: String,
+      streetAddress: Number,
+      apartmentNumber: Number,
+      neighborhood: String,
+      zipCode: String,
+      description: String,
     },
-    photos: [String],
+
+    photos: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: EModels.IMAGE,
+        required: false,
+      },
+    ],
     owner: {
       type: mongoose.Schema.ObjectId,
-      ref: 'User',
+      ref: EModels.USER,
       required: true,
+    },
+    active: {
+      type: Boolean,
+      default: true,
+      select: false,
     },
   },
   {
@@ -34,11 +58,21 @@ const petSchema = new mongoose.Schema(
   }
 );
 
-// petSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: 'owner',
-//     select: '-__v -passwordChangedAt',
-//   });
-// });
+petSchema.pre(/^find/, function (next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
 
-export const Pet = mongoose.model<IPetDocument>('Pet', petSchema);
+petSchema.pre(/^find/, function (next) {
+  // this.populate({
+  //   path: 'owner',
+  //   select: '-__v -passwordChangedAt',
+  // });
+  this.populate({
+    path: 'photos',
+    select: 'src contentType id',
+  });
+  next();
+});
+
+export const Pet = mongoose.model<IPetDocument>(EModels.PET, petSchema);

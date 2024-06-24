@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { FilterQuery } from 'mongoose';
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../error/AppError';
 import { Pet } from './pet/Pet.model';
@@ -20,13 +20,24 @@ export const Factory = <T>(model: mongoose.Model<T>) => {
   const create = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
       const newDoc = await model.create({ ...req.body });
-      res.status(201).json({ status: true, pet: newDoc });
+      res.status(201).json({ status: true, data: newDoc });
+    };
+  };
+
+  const createMany = () => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const newDocs = await model.insertMany(req.body);
+      return newDocs;
     };
   };
 
   const findAll = () => {
-    return async (req: Request, res: Response, next: NextFunction) => {
-      const docs = await model.find(req.query!);
+    return async (
+      query: FilterQuery<any>,
+      res: Response,
+      next: NextFunction
+    ) => {
+      const docs = await model.find(query);
       res.status(200).json({ status: true, pet: docs });
     };
   };
@@ -34,7 +45,7 @@ export const Factory = <T>(model: mongoose.Model<T>) => {
   const updateOne = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
       const doc = await model.findByIdAndUpdate(req.params.id, req.body);
-      res.status(204).json({ status: true, pet: doc });
+      res.status(204).json({ status: true, data: doc });
     };
   };
 
@@ -43,6 +54,7 @@ export const Factory = <T>(model: mongoose.Model<T>) => {
     create,
     findAll,
     updateOne,
+    createMany,
   };
 };
 

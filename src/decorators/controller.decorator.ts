@@ -1,5 +1,5 @@
 import { AppRouter } from '../router/AppRouter';
-import { catchAsync } from '../utils/catchAsync';
+import { tryCatch } from '../utils/tryCatch';
 import 'reflect-metadata';
 import { MetadataKeys } from './enums/MetadataKeys';
 import { RoutePrefix } from '../router/RoutePrefix';
@@ -10,7 +10,7 @@ export function controller(routePrefix: string): Function {
     const router = AppRouter.instance;
 
     for (let key of Object.getOwnPropertyNames(target.prototype)) {
-      const routeHandler = catchAsync(target.prototype[key]);
+      const routeHandler = tryCatch(target.prototype[key]);
 
       const path = Reflect.getMetadata(
         MetadataKeys.PATH,

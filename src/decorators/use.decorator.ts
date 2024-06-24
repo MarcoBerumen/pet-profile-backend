@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { RequestHandler } from 'express';
 import { MetadataKeys } from './enums/MetadataKeys';
-import { catchAsync } from '../utils/catchAsync';
+import { tryCatch } from '../utils/tryCatch';
 
 export function use(middleware: RequestHandler) {
   return function (target: any, key: string, desc: PropertyDescriptor) {
@@ -10,7 +10,7 @@ export function use(middleware: RequestHandler) {
 
     Reflect.defineMetadata(
       MetadataKeys.MIDDLEWARE,
-      [...middlewares, catchAsync(middleware)],
+      [...middlewares, tryCatch(middleware)],
       target,
       key
     );

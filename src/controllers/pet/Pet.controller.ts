@@ -2,12 +2,17 @@ import { controller } from '../../decorators/controller.decorator';
 import { NextFunction, Request, Response } from 'express';
 import { Delete, Get, Patch, Post } from '../../decorators/routes.decorator';
 import { Factory } from '../../models/Factory';
-import { User } from '../../models/user/User.model';
 import { use } from '../../decorators/use.decorator';
 import { AuthController } from '../auth/Auth.controller';
-import { Pet } from '../../models/pet/Pet.model';
+import { IPetDocument, Pet } from '../../models/pet/Pet.model';
+import { AppError } from '../../error/AppError';
+import { Multer } from '../../config/multer';
+import { Image } from '../../models/image/Image.model';
+import { Document } from 'mongoose';
 
 const { create, deleteOne, findAll, updateOne } = Factory(Pet);
+const { createMany: createImages, deleteOne: deleteImageModel } =
+  Factory(Image);
 
 @controller('/pet')
 export class PetController {
@@ -19,18 +24,84 @@ export class PetController {
   }
   @Delete('/:id')
   @use(AuthController.protect)
-  public deletePet(req: Request, res: Response, next: NextFunction) {
-    return deleteOne()(req, res, next);
+  public async deletePet(req: Request, res: Response, next: NextFunction) {
+    const pet = Pet.findById(req.params.id);
+    if (!pet) return next(new AppError('No pet found', 404));
+    await pet.updateOne({ active: false });
+    res.status(204).end();
   }
   @Get('/')
   @use(AuthController.protect)
   public async getAll(req: Request, res: Response, next: NextFunction) {
-    req.query = { owner: req.user.id };
-    return findAll()(req, res, next);
+    const query = { owner: req.user.id } as any;
+    return findAll()(query, res, next);
   }
   @Patch('/:id')
   @use(AuthController.protect)
   public async update(req: Request, res: Response, next: NextFunction) {
     return updateOne()(req, res, next);
+  }
+
+  @Post('/:id/image')
+  @use(AuthController.protect)
+  @use(Multer.getInstance().upload.array('images'))
+  public async uploadImage(req: Request, res: Response, next: NextFunction) {
+    if (!req.files) {
+      return next(new AppError('No files Uploaded', 404));
+    }
+
+    const pet = await Pet.findById(req.params.id);
+
+    if (!pet) return next(new AppError('No pet found', 404));
+    if (!req.files) return next(new AppError('No files sent', 400));
+    if (pet.photos.length >= 3)
+      return next(new AppError("You've already uploaded 3 images", 400));
+
+    const photosToBeUploaded = req.files.length as number;
+    if (pet.photos.length + photosToBeUploaded > 3)
+      return next(new AppError('You can only have 3 photos per pet', 400));
+
+    const images = (req.files as Array<Express.Multer.File>).map((file) => ({
+      src: file.buffer,
+      contentType: file.mimetype,
+    }));
+    req.body = images;
+    const savedImages = await createImages()(req, res, next);
+    const imagesIds = savedImages.reduce(
+      (accumulator: Array<number>, currentValue: any) => {
+        accumulator.push(currentValue.id);
+        return accumulator;
+      },
+      []
+    );
+    req.body = {
+      photos: imagesIds,
+    };
+
+    await pet.updateOne(
+      { $addToSet: { photos: { $each: imagesIds } } },
+      { new: true, useFindAndModify: false }
+    );
+
+    res.status(204).json({ status: true, message: 'Photo correctly added' });
+  }
+
+  @Delete('/:id/image/:imageId')
+  @use(AuthController.protect)
+  public async deleteImage(req: Request, res: Response, next: NextFunction) {
+    const pet = await Pet.findById(req.params.id);
+
+    if (!pet) return next(new AppError('No pet found', 404));
+
+    if (pet.photos.length < 1)
+      return next(new AppError('No image to delete', 400));
+
+    const image = await Image.findById(req.params.imageId);
+
+    if (!image) return next(new AppError('No image to delete', 404));
+
+    await image.deleteOne();
+
+    res.status(204).end();
   }
 }
