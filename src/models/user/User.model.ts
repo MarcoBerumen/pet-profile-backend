@@ -2,8 +2,9 @@ import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import { Mail } from '../../utils/Mail';
 import validator from 'validator';
+import { EModels } from '../enumModels';
 
-interface IUserDocument extends mongoose.Document {
+export interface IUserDocument extends mongoose.Document {
   name: string;
   email: string;
   phone: string;
@@ -119,4 +120,4 @@ userSchema.methods.changedPasswordAfter = function (
   return false;
 };
 
-export const User = mongoose.model<IUserDocument>('User', userSchema);
+export const User = mongoose.model<IUserDocument>(EModels.USER, userSchema);
