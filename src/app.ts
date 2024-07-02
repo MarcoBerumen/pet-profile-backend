@@ -10,11 +10,8 @@ import { AppRouter } from './router/AppRouter';
 
 //IMPORT ALL CONTROLLERS
 import './controllers';
+import { ENVS } from './config/config';
 
-enum ENVS {
-  DEVELOPMENT = 'development',
-  PRODUCTION = 'production',
-}
 
 const app = express();
 
@@ -49,4 +46,4 @@ app.all('*', (req: Request, res: Response, next: NextFunction) => {
 
 app.use(globalErrorHandler);
 
-export = app;
+export =  app

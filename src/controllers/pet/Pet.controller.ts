@@ -7,8 +7,9 @@ import { AuthController } from '../auth/Auth.controller';
 import { IPetDocument, Pet } from '../../models/pet/Pet.model';
 import { AppError } from '../../error/AppError';
 import { Multer } from '../../config/multer';
-import { Image } from '../../models/image/Image.model';
+import { EEncodedTypes, Image } from '../../models/image/Image.model';
 import { Document } from 'mongoose';
+import { ENVS } from '../../config/config';
 
 const { create, deleteOne, findAll, updateOne } = Factory(Pet);
 const { createMany: createImages, deleteOne: deleteImageModel } =
@@ -61,9 +62,11 @@ export class PetController {
     if (pet.photos.length + photosToBeUploaded > 3)
       return next(new AppError('You can only have 3 photos per pet', 400));
 
+
     const images = (req.files as Array<Express.Multer.File>).map((file) => ({
       src: file.buffer,
       contentType: file.mimetype,
+      encoded: process.env.NODE_ENV === ENVS.DEVELOPMENT ? EEncodedTypes.BUFFER : EEncodedTypes.HTTPURL
     }));
     req.body = images;
     const savedImages = await createImages()(req, res, next);

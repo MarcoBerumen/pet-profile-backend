@@ -1,5 +1,6 @@
 import { Request, RequestHandler } from 'express';
 import multer from 'multer';
+import { AppError } from '../error/AppError';
 
 export class Multer {
   private static instance: Multer | undefined;
@@ -21,10 +22,9 @@ export class Multer {
     cb: multer.FileFilterCallback
   ) => {
     if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-      cb(null, false);
-      throw new Error('Only image files are allowed!');
+      return cb(new AppError("Only image files are allowed!", 400));
     }
-    cb(null, true);
+    return cb(null, true);
   };
 
   private get options(): multer.Options {
