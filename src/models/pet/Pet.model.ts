@@ -70,7 +70,7 @@ petSchema.pre(/^find/, function (next) {
   // });
   this.populate({
     path: 'photos',
-    select: 'src contentType id',
+    select: ' src contentType encoded ',
   });
   next();
 });

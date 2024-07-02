@@ -2,15 +2,26 @@ import mongoose from 'mongoose';
 import { EModels } from '../enumModels';
 import { Pet } from '../pet/Pet.model';
 
+export enum EEncodedTypes{
+  BUFFER = "BUFFER",
+  HTTPURL = "HTTP_URL"
+}
+
 export interface IImageDocument extends mongoose.Document {
   src: any;
   contentType: string;
+  encoded: string;
   pet: string;
 }
 
 const imageSchema = new mongoose.Schema({
   src: Buffer,
   contentType: String,
+  encoded: {
+    type: String,
+    enum: [EEncodedTypes.BUFFER, EEncodedTypes.HTTPURL],
+    required:true
+  }
 });
 
 imageSchema.set('toJSON', {
@@ -18,7 +29,10 @@ imageSchema.set('toJSON', {
   transform: (doc, ret) => {
     if (ret.src) {
       if (ret.src.type === 'Buffer')
-        ret.src = Buffer.from(ret.src.data).toString('base64');
+        ret.src = ret.src.data;
+        ret.type = ret.src.type;
+        // base64 encoded buffer
+        // ret.src = Buffer.from(ret.src.data).toString('base64');
     }
     return ret;
   },
