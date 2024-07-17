@@ -10,8 +10,11 @@ import { Multer } from '../../config/multer';
 import { EEncodedTypes, Image } from '../../models/image/Image.model';
 import { Document } from 'mongoose';
 import { ENVS } from '../../config/config';
+import { LostPet } from '../../models/LostPet/LostPet.model';
+import { MyDate } from '../../utils/Date';
 
 const { create, deleteOne, findAll, updateOne } = Factory(Pet);
+const  {create: createLostPet, deleteOne: deleteLostPet, findAll: findAllLostPet, updateOne: updateLostPet, findOneById: findOneLosPet} = Factory(LostPet)
 const { createMany: createImages, deleteOne: deleteImageModel } =
   Factory(Image);
 
@@ -41,6 +44,38 @@ export class PetController {
   @use(AuthController.protect)
   public async update(req: Request, res: Response, next: NextFunction) {
     return updateOne()(req, res, next);
+  }
+
+  @Post("/:id/lost")
+  @use( AuthController.protect)
+  public async createLostAd(req:Request, res:Response, next:NextFunction){
+    req.body = {...req.body, pet: req.params.id}
+    const lostPet = await LostPet.findOne({pet: req.params.id})
+    if(lostPet && lostPet.active) return next(new AppError("This Pet already has a Lost Ad", 400));
+    const date = req.body.date;
+    if(date){
+      const dateObject = new Date(date);
+      if(!MyDate.isValid(dateObject)) return next(new AppError("Wrong date provided", 400))
+      req.body.date = dateObject;
+    }
+    return createLostPet()(req,res,next)
+  }
+
+  @Delete("/:id/lost")
+  @use(AuthController.protect)
+  public async deleteLosAd(req:Request, res:Response, next:NextFunction) {
+    const lostAd = await LostPet.findOne({pet: req.params.id, active: true});
+    if(!lostAd) return next(new AppError("This peto doesn't have an active lost ad", 400))
+    lostAd.active = false;
+    await lostAd.save()
+    return res.status(204).end()
+  }
+  
+  @Patch("/:lostPet/lost/:id")
+  @use( AuthController.protect)
+  public async updateLostAd(req:Request, res:Response, next:NextFunction){
+    // req.body = {...req.body}
+    return updateLostPet()(req,res,next)
   }
 
   @Post('/:id/image')
