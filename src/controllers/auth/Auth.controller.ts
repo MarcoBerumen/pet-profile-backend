@@ -55,6 +55,10 @@ export class AuthController {
 
   @Post('/signup')
   async signup(req: Request, res: Response, next: NextFunction) {
+    if(req.body.phone){
+      const possibleUser = await User.findOne({phone: req.body.phone});
+      if(possibleUser) return next(new AppError("This phone is already taken", 400))
+    }
     const newUser = await User.create({ ...req.body });
     newUser.generateCodeAuthChallengeAndSendEmail();
     res.status(201).json({

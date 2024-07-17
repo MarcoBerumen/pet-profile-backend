@@ -38,7 +38,7 @@ export class PetController {
   @use(AuthController.protect)
   public async getAll(req: Request, res: Response, next: NextFunction) {
     const query = { owner: req.user.id } as any;
-    return findAll()(query, res, next);
+    return await findAll()(query, res, next);
   }
   @Patch('/:id')
   @use(AuthController.protect)
@@ -50,7 +50,7 @@ export class PetController {
   @use( AuthController.protect)
   public async createLostAd(req:Request, res:Response, next:NextFunction){
     req.body = {...req.body, pet: req.params.id}
-    const lostPet = await LostPet.findOne({pet: req.params.id})
+    const lostPet = await LostPet.findOne({pet: req.params.id, active: true})
     if(lostPet && lostPet.active) return next(new AppError("This Pet already has a Lost Ad", 400));
     const date = req.body.date;
     if(date){

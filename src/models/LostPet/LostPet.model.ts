@@ -41,12 +41,4 @@ const lostPetSchema = new mongoose.Schema(
     }
 )
 
-lostPetSchema.pre(/^find/, function(next){
-    this.populate({
-        path: 'pet',
-        select: '_id name photos'
-    });
-    next();
-})
-
 export const LostPet = mongoose.model<ILostPetDocument>(EModels.LOST_PET, lostPetSchema);

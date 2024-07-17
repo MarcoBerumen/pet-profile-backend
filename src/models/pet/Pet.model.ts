@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { EModels } from '../enumModels';
+import { LostPet } from '../LostPet/LostPet.model';
 
 export interface IPetDocument extends mongoose.Document {
   name: string;
@@ -7,6 +8,7 @@ export interface IPetDocument extends mongoose.Document {
   address: string;
   photos: string[];
   reward: number;
+  isLost: boolean;
 }
 
 const petSchema = new mongoose.Schema(
@@ -51,6 +53,10 @@ const petSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    isLost: {
+      type: Boolean,
+      default: false
+    }
   },
   {
     toJSON: { virtuals: true },
@@ -72,6 +78,20 @@ petSchema.pre(/^find/, function (next) {
     path: 'photos',
     select: ' src contentType encoded ',
   });
+  next();
+});
+
+petSchema.post(/^find/, async function (docs, next) {
+  for (let i= 0; i< docs.length; i++) {
+    const doc = docs[i]
+    doc.isLost = false
+    const lostAd = await LostPet.findOne({
+      active:true,
+      pet: doc._id
+    }).select('active');
+
+    if(lostAd) docs[i].isLost = true;
+  }
   next();
 });
 

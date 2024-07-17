@@ -4,6 +4,9 @@ import { EModels } from "../enumModels";
 
 export interface IQrCodeDocument extends mongoose.Document {
     id:string;
+    pet:string;
+    user:string;
+    image:string;
 }
 
 const qrSchema = new mongoose.Schema(

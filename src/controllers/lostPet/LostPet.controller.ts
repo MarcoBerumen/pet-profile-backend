@@ -23,7 +23,10 @@ export class LostPetController {
         const skip = (page - 1) * limit;
         const totalAds = await LostPet.countDocuments({active: true});
         const totalPages = Math.ceil(totalAds / limit);
-        const ads = await LostPet.find({active: true}).sort({createdAt: 1}).skip(skip).limit(limit).exec();
+        const ads = await LostPet.find({active: true}).populate({
+            path: 'pet',
+            select: '_id name photos'
+        }).sort({createdAt: 1}).skip(skip).limit(limit).exec();
 
         return res.status(200).json({
             status: true,
