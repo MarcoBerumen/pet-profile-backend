@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { Mail } from '../../utils/Mail';
 import validator from 'validator';
 import { EModels } from '../enumModels';
+import { AppError } from '../../error/AppError';
 
 export interface IUserDocument extends mongoose.Document {
   name: string;
@@ -86,6 +87,14 @@ userSchema.pre('save', async function (next) {
   this.passwordConfirm = undefined;
   next();
 });
+
+// userSchema.pre("save", async function(next) {
+//   if(this.phone){
+//     const possibleUser = await User.find({phone: this.phone});
+//     if(possibleUser) return next(new AppError("This phone is already taken", 400))
+//   }
+//   next()
+// })
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || this.isNew) return next();
