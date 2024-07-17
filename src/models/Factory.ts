@@ -49,12 +49,18 @@ export const Factory = <T>(model: mongoose.Model<T>) => {
     };
   };
 
+  const findOneById = async (id:string) => {
+      const doc = await model.findById(id);
+      return doc
+  }
+
   return {
     deleteOne,
     create,
     findAll,
     updateOne,
     createMany,
+    findOneById
   };
 };
 
