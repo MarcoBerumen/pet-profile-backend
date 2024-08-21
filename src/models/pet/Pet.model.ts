@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { EModels } from '../enumModels';
 import { LostPet } from '../LostPet/LostPet.model';
+import { QrCode } from '../qrCode/QrCode.model';
 
 export interface IPetDocument extends mongoose.Document {
   name: string;
@@ -25,7 +26,7 @@ const petSchema = new mongoose.Schema(
       type: {
         type: String,
         default: 'Point',
-        enum: 'Point',
+        enum: ['Point'],
       },
       coordinates: [Number],
       street: String,
@@ -56,6 +57,9 @@ const petSchema = new mongoose.Schema(
     isLost: {
       type: Boolean,
       default: false
+    },
+    qr: {
+      type: String,
     }
   },
   {
@@ -63,6 +67,8 @@ const petSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+petSchema.index({ address: "2dsphere"})
 
 petSchema.pre(/^find/, function (next) {
   this.find({ active: { $ne: false } });
@@ -82,17 +88,40 @@ petSchema.pre(/^find/, function (next) {
 });
 
 petSchema.post(/^find/, async function (docs, next) {
+  if(!docs) return next()
   for (let i= 0; i< docs.length; i++) {
     const doc = docs[i]
     doc.isLost = false
     const lostAd = await LostPet.findOne({
       active:true,
       pet: doc._id
-    }).select('active');
+    }).select('active') ;
 
-    if(lostAd) docs[i].isLost = true;
+
+    if(lostAd) {
+      docs[i].isLost = true;
+      docs[i].reward = lostAd.reward;
+    }
   }
   next();
 });
+
+petSchema.post(/^find/, async function (docs, next) {
+  if (!docs) return next()
+  for(let i= 0 ; i< docs.length; i++){
+    const doc = docs[i]
+    const petId = doc._id;
+    const qr = await QrCode.findOne({
+      pet: petId
+    }).select("id")
+
+    console.log(qr)
+
+    if (qr) docs[i].qr = qr.id;
+    else docs[i].qr = undefined;
+
+  }
+  next()
+})
 
 export const Pet = mongoose.model<IPetDocument>(EModels.PET, petSchema);

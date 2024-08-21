@@ -3,7 +3,8 @@ import { controller } from '../../decorators/controller.decorator';
 import { Delete, Get, Patch, Post } from '../../decorators/routes.decorator';
 import { User } from '../../models/user/User.model';
 import { AppError } from '../../error/AppError';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt, { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
+import { AuthGoogle } from '../../utils/AuthGoogle/AuthGoogle';
 
 const signToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
@@ -32,25 +33,31 @@ export class AuthController {
     }
 
     //2) VERIFICATION TOKEN
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
-    const user = await User.findById(decoded.id);
+      const user = await User.findById(decoded!.id);
 
-    if (!user) return next(new AppError('El usuario ya no existe', 401));
+      if (!user) return next(new AppError('El usuario ya no existe', 401));
 
-    //4) CHECK IF USER CHANGED PASSWORD AFTER THE JWT WAS ISSUED
-    if (user.changedPasswordAfter(decoded.iat!)) {
-      return next(
-        new AppError(
-          'El usuario recientemente cambio de contraseña! Porfavor inicia sesión nuevamente',
-          401
-        )
-      );
+      //4) CHECK IF USER CHANGED PASSWORD AFTER THE JWT WAS ISSUED
+      if (user.changedPasswordAfter(decoded!.iat!)) {
+        return next(
+          new AppError(
+            'El usuario recientemente cambio de contraseña! Porfavor inicia sesión nuevamente',
+            401
+          )
+        );
+      }
+
+      //GRANT ACCESS TO PROTECTED ROUTE
+      req.user = user;
+      next();
+    } catch(e){
+      if(e instanceof TokenExpiredError) return next(new AppError("El token expiro", 403))
+        console.log(e)
+        return next(new AppError("Algo paso mal al autenticarte, vuelve a iniciar sesión", 403))
     }
-
-    //GRANT ACCESS TO PROTECTED ROUTE
-    req.user = user;
-    next();
   };
 
   @Post('/signup')
@@ -156,5 +163,19 @@ export class AuthController {
     await user.save();
 
     res.status(204).json();
+  }
+
+  @Post("/google-verify")
+  async googleVerify(req:Request, res:Response, next: NextFunction) {
+    const { googleToken } = req.body
+    const oathGoogleClient = AuthGoogle.getInstance();
+    const ticket = await oathGoogleClient.verifyIdToken({
+      idToken: googleToken,
+      // audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    console.log(payload)
+    console.log(`USER: ${payload}`)
+    res.status(200).end()
   }
 }

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { controller } from "../../decorators/controller.decorator";
-import { Get, Patch, Post } from "../../decorators/routes.decorator";
+import { Delete, Get, Patch, Post } from "../../decorators/routes.decorator";
 import { use } from "../../decorators/use.decorator";
 import { AuthController } from "../auth/Auth.controller";
 import { v4 } from 'uuid'
@@ -10,6 +10,7 @@ import { EEncodedTypes, Image } from "../../models/image/Image.model";
 import { Pet } from "../../models/pet/Pet.model";
 import { AppError } from "../../error/AppError";
 import { User } from "../../models/user/User.model";
+import {Types} from 'mongoose'
 
 
 
@@ -72,5 +73,33 @@ export class QrController {
             message: "QR CODE correctly assigned to Pet"
         })
 
+    }
+
+    @Delete("/:qrId/pet/:petId")
+    @use(AuthController.protect)
+    public async unassignedPet(req:Request, res:Response, next:NextFunction){
+        const qrId = req.params.qrId;
+        const qr = await QrCode.findOne({id: qrId}).select("pet user");
+        if(!qr) return next(new AppError("This QR doesn't exists", 404))
+        if(!qr.user) return next(new AppError("This Qr doesn't belong to a user", 404))
+        if(qr.user.toString() !== req.user.id) return next(new AppError("This Qr doesn't belong to you", 400))
+        if(!qr.pet) return next(new AppError("This Qr doesn't have a Pet assigned", 400)) 
+        qr.pet = undefined
+        await qr.save()
+        return res.status(204).json({})
+    }
+
+    @Delete("/:qrId")
+    @use(AuthController.protect)
+    public async unassignedUser(req:Request, res: Response, next:NextFunction){
+        const qrId = req.params.qrId;
+        const qr = await QrCode.findOne({id: qrId}).select("pet user");
+        if(!qr) return next(new AppError("This QR doesn't exists", 404))
+        if(!qr.user) return next(new AppError("This Qr doesn't belong to a user", 404))
+        if(qr.user.toString() !== req.user.id) return next(new AppError("This Qr doesn't belong to you", 400))
+        qr.pet = undefined
+        qr.user = undefined
+        await qr.save()
+        return res.status(204).json({})
     }
 }
