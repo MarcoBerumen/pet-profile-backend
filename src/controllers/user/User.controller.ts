@@ -5,17 +5,26 @@ import { Factory } from '../../models/Factory';
 import { User } from '../../models/user/User.model';
 import { use } from '../../decorators/use.decorator';
 import { AuthController } from '../auth/Auth.controller';
+import { AppError } from '../../error/AppError';
 
 const deleteUser = Factory(User).deleteOne;
 
 @controller('/user')
 export class UserController {
   @Delete('/:id')
-  public deleteUser(req: Request, res: Response, next: NextFunction) {
-    return deleteUser()(req, res, next);
+  @use(AuthController.protect)
+  public async deleteUser(req: Request, res: Response, next: NextFunction) {
+    const doc = await User.findByIdAndUpdate(req.user.id, {
+      active: false
+    });
+
+    if (!doc)
+      return next(new AppError('No document found with this id', 404));
+
+    res.status(204).end();
   }
 
-  @Get("/")
+  @Get("/me")
   @use(AuthController.protect)
   public async getMe(req:Request, res:Response, next:NextFunction) {
     return res.status(200).json({
@@ -31,10 +40,10 @@ export class UserController {
     return res.status(204).end()
   }
 
-  @Patch("/")
+  @Patch("/me")
   @use(AuthController.protect)
   public async updateMe(req:Request, res:Response, next:NextFunction){
-    await User.updateOne({id: req.user._id}, {
+    const updatedUser = await User.updateOne({_id: req.user.id}, {
       name: req.body.name,
       instagram: req.body.instagram
     })

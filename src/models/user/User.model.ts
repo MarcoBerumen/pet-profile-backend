@@ -39,6 +39,12 @@ const userSchema = new mongoose.Schema({
     unique: true,
     validate: [validator.isMobilePhone, 'Please provide a valid phone number'],
   },
+  instagram: {
+    type: String,
+    unique: false,
+    required: false,
+    validate: [validator.isURL, "Please provide a valid url"]
+  },
   photo: String,
   // role: {
   //   type: String,
