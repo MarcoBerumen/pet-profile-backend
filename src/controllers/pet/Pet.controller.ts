@@ -37,7 +37,7 @@ export class PetController {
   @Get('/')
   @use(AuthController.protect)
   public async getAll(req: Request, res: Response, next: NextFunction) {
-    const query = { owner: req.user.id, "address.coordinates": undefined } as any;
+    const query = { owner: req.user.id } as any;
     const {latitude, longitude} = req.query;
     // if(latitude && longitude) {
     //   query["address.coordinates"] = {

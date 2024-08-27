@@ -58,6 +58,9 @@ const petSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    reward: {
+      type: Number,
+    },
     qr: {
       type: String,
     }
@@ -95,7 +98,7 @@ petSchema.post(/^find/, async function (docs, next) {
     const lostAd = await LostPet.findOne({
       active:true,
       pet: doc._id
-    }).select('active') ;
+    }).select('active reward') ;
 
 
     if(lostAd) {
