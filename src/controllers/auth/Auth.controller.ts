@@ -168,14 +168,21 @@ export class AuthController {
   @Post("/google-verify")
   async googleVerify(req:Request, res:Response, next: NextFunction) {
     const { googleToken } = req.body
+    console.log(googleToken)
     const oathGoogleClient = AuthGoogle.getInstance();
-    const ticket = await oathGoogleClient.verifyIdToken({
-      idToken: googleToken,
-      // audience: process.env.GOOGLE_CLIENT_ID
-    });
-    const payload = ticket.getPayload();
-    console.log(payload)
-    console.log(`USER: ${payload}`)
-    res.status(200).end()
+
+    try{
+      const ticket = await oathGoogleClient.verifyIdToken({
+        idToken: googleToken,
+        // audience: process.env.GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      console.log(payload)
+      console.log(`USERd: ${payload}`)
+      res.status(200).end()
+    }catch (err) {
+      console.log()
+      return next(new AppError(err.message, 500))
+    }
   }
 }

@@ -4,6 +4,7 @@ import { path } from "../../app";
 
 export interface ILostPetDocument extends mongoose.Document {
     pet:string;
+    reward: number;
     active: boolean;
     found: Date;
     createdAt: Date;
