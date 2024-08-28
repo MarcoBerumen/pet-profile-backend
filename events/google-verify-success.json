@@ -1,0 +1,16 @@
+{
+    "iss": "https://accounts.google.com",
+    "azp": "568720630162-aj2paggbt793jvco1ussmgau20sh8v2j.apps.googleusercontent.com",
+    "aud": "568720630162-aj2paggbt793jvco1ussmgau20sh8v2j.apps.googleusercontent.com",
+    "sub": "105962685311661252148",
+    "email": "alexiren15@gmail.com",
+    "email_verified": true,
+    "at_hash": "0_cQnywIUviUCi4exKR26w",
+    "nonce": "tlP4XvR0CpQb-MUoEwrlNrDpz_IlepMHen_LxPEIxjc",
+    "name": "Alex Ora",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocKdpTXeKdoKJIeq81FUSGJ1CMWvLcDQUZg7CLhk4UIUXb17jPaJ=s96-c",
+    "given_name": "Alex",
+    "family_name": "Ora",
+    "iat": 1724736020,
+    "exp": 1724739620
+}

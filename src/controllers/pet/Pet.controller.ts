@@ -85,11 +85,17 @@ export class PetController {
     return res.status(204).end()
   }
   
-  @Patch("/:lostPet/lost/:id")
+  @Patch("/:lostPet/lost")
   @use( AuthController.protect)
   public async updateLostAd(req:Request, res:Response, next:NextFunction){
-    // req.body = {...req.body}
-    return updateLostPet()(req,res,next)
+    const lostAd = await LostPet.findOne({pet: req.params.lostPet, active: true});
+    if(lostAd) {
+      lostAd.reward = req.body.reward;
+      lostAd.save();
+    }else { 
+      return next(new AppError(`There is no Lost ad for this pet`, 409));
+    }
+    return res.status(204).end()
   }
 
   @Post('/:id/image')
