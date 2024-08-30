@@ -76,6 +76,11 @@ const userSchema = new mongoose.Schema({
   },
   authChallengeCode: String,
   authCHallengeExpires: Date,
+  typeAccount: {
+    type: String,
+    enum: ["google", "user"],
+    default: "user"
+  },
   active: {
     type: Boolean,
     default: true,

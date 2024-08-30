@@ -39,17 +39,17 @@ export class PetController {
   public async getAll(req: Request, res: Response, next: NextFunction) {
     const query = { owner: req.user.id } as any;
     const {latitude, longitude} = req.query;
-    // if(latitude && longitude) {
-    //   query["address.coordinates"] = {
-    //     $nearSphere: {
-    //       $geometry: {
-    //         type: "Point",
-    //         coordinates: [longitude, latitude]
-    //       },
-    //       $maxDistance: 5000//ffgvf
-    //     }
-    //   }
-    // }
+    if(latitude && longitude) {
+      query["address.coordinates"] = {
+        $nearSphere: {
+          $geometry: {
+            type: "Point",
+            coordinates: [parseFloat(longitude.toString()), parseFloat(latitude.toString())]
+          },
+          $maxDistance: 30000
+        }
+      }
+    }
     const docs = await Pet.find(query);
     return res.status(200).json({ status: true, pet: docs });
     // return await findAll()(query, res, next);

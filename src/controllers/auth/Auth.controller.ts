@@ -168,19 +168,44 @@ export class AuthController {
   @Post("/google-verify")
   async googleVerify(req:Request, res:Response, next: NextFunction) {
     const { googleToken } = req.body
-    console.log(googleToken)
     const oathGoogleClient = AuthGoogle.getInstance();
 
     try{
       const ticket = await oathGoogleClient.verifyIdToken({
         idToken: googleToken,
-        // audience: process.env.GOOGLE_CLIENT_ID
       });
+      // Check if already exists in database
       const payload = ticket.getPayload();
-      console.log(payload)
-      console.log(`USERd: ${payload}`)
-      res.status(200).end()
-    }catch (err) {
+      if(!payload) return next(new AppError("No Payload from Google Found", 404));
+      const email = payload.email;
+      const emailVerified = payload.email_verified;
+      if(!emailVerified) return next(new AppError("Email not verified", 409));
+      const user = await User.findOne({ email: email });
+      let newUser: any = user;
+      if ( !user ){
+        // Create user
+        const name = payload.name
+        const picture = payload.picture;
+        newUser = await User.create({
+          name: name,
+          email: email,
+          photo: picture,
+          typeAccount: "google",
+          password: "143214321",
+          passwordConfirm: "143214321"
+        })
+        newUser.password = ""
+      } 
+      const token = signToken(newUser._id);
+      
+      res.status(200).json({
+        ok: true,
+        token,
+        data: {
+          user: newUser
+        }
+      })
+    }catch (err: any) {
       console.log()
       return next(new AppError(err.message, 500))
     }
