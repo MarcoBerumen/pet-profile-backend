@@ -84,7 +84,7 @@ export class QrController {
         if(!qr.user) return next(new AppError("This Qr doesn't belong to a user", 404))
         if(qr.user.toString() !== req.user.id) return next(new AppError("This Qr doesn't belong to you", 400))
         if(!qr.pet) return next(new AppError("This Qr doesn't have a Pet assigned", 400)) 
-        qr.pet = undefined
+        qr.pet = ""
         await qr.save()
         return res.status(204).json({})
     }
@@ -97,8 +97,8 @@ export class QrController {
         if(!qr) return next(new AppError("This QR doesn't exists", 404))
         if(!qr.user) return next(new AppError("This Qr doesn't belong to a user", 404))
         if(qr.user.toString() !== req.user.id) return next(new AppError("This Qr doesn't belong to you", 400))
-        qr.pet = undefined
-        qr.user = undefined
+        qr.pet = ""
+        qr.user = ""
         await qr.save()
         return res.status(204).json({})
     }

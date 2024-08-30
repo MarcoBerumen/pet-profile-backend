@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Query } from 'mongoose';
 import { EModels } from '../enumModels';
 import { LostPet } from '../LostPet/LostPet.model';
 import { QrCode } from '../qrCode/QrCode.model';
@@ -6,7 +6,16 @@ import { QrCode } from '../qrCode/QrCode.model';
 export interface IPetDocument extends mongoose.Document {
   name: string;
   description: string;
-  address: string;
+  address: {
+    type: string;
+    coordinates: number[];
+    street: string;
+    streetAddress: number;
+    apartmentNumber: number;
+    neighborhood: string;
+    zipCode: string;
+    description: string;
+  };
   photos: string[];
   reward: number;
   isLost: boolean;
@@ -28,7 +37,7 @@ const petSchema = new mongoose.Schema(
         default: 'Point',
         enum: ['Point'],
       },
-      coordinates: [Number],
+      coordinates: {type: [Number], required: true, index: "2dsphere"},
       street: String,
       streetAddress: Number,
       apartmentNumber: Number,
@@ -71,18 +80,14 @@ const petSchema = new mongoose.Schema(
   }
 );
 
-petSchema.index({ address: "2dsphere"})
+petSchema.index({ 'address.coordinates': "2dsphere"})
 
-petSchema.pre(/^find/, function (next) {
+petSchema.pre(/^find/, function (this: Query<any, Document>, next) {
   this.find({ active: { $ne: false } });
   next();
 });
 
-petSchema.pre(/^find/, function (next) {
-  // this.populate({
-  //   path: 'owner',
-  //   select: '-__v -passwordChangedAt',
-  // });
+petSchema.pre(/^find/, function (this: Query<any, Document>, next) {
   this.populate({
     path: 'photos',
     select: ' src contentType encoded ',
@@ -117,8 +122,6 @@ petSchema.post(/^find/, async function (docs, next) {
     const qr = await QrCode.findOne({
       pet: petId
     }).select("id")
-
-    console.log(qr)
 
     if (qr) docs[i].qr = qr.id;
     else docs[i].qr = undefined;
