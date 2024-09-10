@@ -7,6 +7,10 @@ export interface ILostPetDocument extends mongoose.Document {
     reward: number;
     active: boolean;
     found: Date;
+    address?: {
+        line: string;
+        coordinates: number[];
+    }
     createdAt: Date;
     updatedAt: Date;
 }
@@ -31,6 +35,19 @@ const lostPetSchema = new mongoose.Schema(
             type: Date,
             required: false
         },
+        address: {
+            type: {
+                type: String,
+                default: "Point",
+                enum: ["Point"]
+            },
+            coordinates: {
+                type: [Number],
+                required: true,
+                index: "2dsphere"
+            },
+            line: String
+        },
         date: {
             type: Date,
             required: true,
@@ -41,5 +58,7 @@ const lostPetSchema = new mongoose.Schema(
         timestamps: true
     }
 )
+
+lostPetSchema.index({'address.coordinates': "2dsphere"});
 
 export const LostPet = mongoose.model<ILostPetDocument>(EModels.LOST_PET, lostPetSchema);

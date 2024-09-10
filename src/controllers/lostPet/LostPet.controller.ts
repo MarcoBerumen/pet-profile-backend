@@ -48,15 +48,17 @@ export class LostPetController {
             )
         }
         const pets = await Pet.aggregate(aggregationPets);
-        console.log(pets)
+        // console.log(pets)
         // QUERY LOST PETS
         const queryAds = {
             active: true,
             pet: { $in: pets.map(pet => pet._id) }
         }
+        const adsAggregattion = await LostPet.aggregate(aggregationPets)
+        console.log(adsAggregattion)
         const _ads = await LostPet.find(queryAds).populate({
             path: "pet",
-            select: "_id name photos"
+            select: "_id name photos address.coordinates address.line"
         }).sort({createdAt: 1}).skip(skip).limit(limit).exec();
         // ADD THE DISTANCE TO THE LOST PET
         const ads = _ads.map(ad => {

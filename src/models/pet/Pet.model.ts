@@ -9,12 +9,7 @@ export interface IPetDocument extends mongoose.Document {
   address: {
     type: string;
     coordinates: number[];
-    street: string;
-    streetAddress: number;
-    apartmentNumber: number;
-    neighborhood: string;
-    zipCode: string;
-    description: string;
+    line:string
   };
   photos: string[];
   reward: number;
@@ -38,14 +33,8 @@ const petSchema = new mongoose.Schema(
         enum: ['Point'],
       },
       coordinates: {type: [Number], required: true, index: "2dsphere"},
-      street: String,
-      streetAddress: Number,
-      apartmentNumber: Number,
-      neighborhood: String,
-      zipCode: String,
-      description: String,
+      line: String,
     },
-
     photos: [
       {
         type: mongoose.Schema.ObjectId,
@@ -72,6 +61,10 @@ const petSchema = new mongoose.Schema(
     },
     qr: {
       type: String,
+    },
+    lossDirection: {
+      coordinates: [Number],
+      line: String
     }
   },
   {
@@ -103,12 +96,14 @@ petSchema.post(/^find/, async function (docs, next) {
     const lostAd = await LostPet.findOne({
       active:true,
       pet: doc._id
-    }).select('active reward') ;
+    }).select('active reward address') ;
 
 
     if(lostAd) {
       docs[i].isLost = true;
       docs[i].reward = lostAd.reward;
+      // IF LOST AD HAS AN ADDRESS
+      docs[i].lossDirection = lostAd.address ??  undefined;
     }
   }
   next();
