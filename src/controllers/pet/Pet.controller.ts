@@ -65,6 +65,8 @@ export class PetController {
   public async createLostAd(req:Request, res:Response, next:NextFunction){
     req.body = {...req.body, pet: req.params.id}
     const lostPet = await LostPet.findOne({pet: req.params.id, active: true})
+    const pet = await Pet.findById(req.params.id);
+    if (!pet) return next(new AppError('No pet found', 404));
     if(lostPet && lostPet.active) return next(new AppError("This Pet already has a Lost Ad", 400));
     const date = req.body.date;
     if(date){
@@ -72,6 +74,8 @@ export class PetController {
       if(!MyDate.isValid(dateObject)) return next(new AppError("Wrong date provided", 400))
       req.body.date = dateObject;
     }
+    if(!req.body.reward) req.body.reward = 0;
+    if(!req.body.address) req.body.address = {line: pet.address.line, coordinates: pet.address.coordinates}
     return createLostPet()(req,res,next)
   }
 
