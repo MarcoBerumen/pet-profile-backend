@@ -5,6 +5,7 @@ import { User } from '../../models/user/User.model';
 import { AppError } from '../../error/AppError';
 import jwt, { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
 import { AuthGoogle } from '../../utils/AuthGoogle/AuthGoogle';
+import {AuthApple} from "../../utils/AuthApple/AuthApple";
 
 const signToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
@@ -164,6 +165,18 @@ export class AuthController {
 
     res.status(204).json();
   }
+
+  @Post("/apple-verify")
+  async appleVerify(req: Request, res: Response, next: NextFunction) {
+    const {authorizationCode} = req.body;
+    const oathAppleClient = new AuthApple();
+    try{
+      const decodedToken = await oathAppleClient.getAppleAuthentication(authorizationCode);
+      console.log(decodedToken);
+    } catch(err: any){
+      return next(new AppError(err.message, 500))
+    }
+}
 
   @Post("/google-verify")
   async googleVerify(req:Request, res:Response, next: NextFunction) {

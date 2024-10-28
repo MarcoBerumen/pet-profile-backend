@@ -1,6 +1,6 @@
-import { Request, RequestHandler } from 'express';
+import {Request} from 'express';
 import multer from 'multer';
-import { AppError } from '../error/AppError';
+import {AppError} from '../error/AppError';
 
 export class Multer {
   private static instance: Multer | undefined;
@@ -28,14 +28,13 @@ export class Multer {
   };
 
   private get options(): multer.Options {
-    const options: multer.Options = {
+    return {
       fileFilter: this.fileFilterFunction,
       storage: this.storage,
       limits: {
-        fileSize: 1024 * 1024 * 5,
+        fileSize: 1024 * 1024 * 10, // MB MEMORY SIZE
         files: 3,
       },
     };
-    return options;
   }
 }

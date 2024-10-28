@@ -1,17 +1,16 @@
-import { controller } from '../../decorators/controller.decorator';
-import { NextFunction, Request, Response } from 'express';
-import { Delete, Get, Patch, Post } from '../../decorators/routes.decorator';
-import { Factory } from '../../models/Factory';
-import { use } from '../../decorators/use.decorator';
-import { AuthController } from '../auth/Auth.controller';
-import { IPetDocument, Pet } from '../../models/pet/Pet.model';
-import { AppError } from '../../error/AppError';
-import { Multer } from '../../config/multer';
-import { EEncodedTypes, Image } from '../../models/image/Image.model';
-import { Document } from 'mongoose';
-import { ENVS } from '../../config/config';
-import { LostPet } from '../../models/LostPet/LostPet.model';
-import { MyDate } from '../../utils/Date';
+import {controller} from '../../decorators/controller.decorator';
+import {NextFunction, Request, Response} from 'express';
+import {Delete, Get, Patch, Post} from '../../decorators/routes.decorator';
+import {Factory} from '../../models/Factory';
+import {use} from '../../decorators/use.decorator';
+import {AuthController} from '../auth/Auth.controller';
+import {Pet} from '../../models/pet/Pet.model';
+import {AppError} from '../../error/AppError';
+import {Multer} from '../../config/multer';
+import {Image} from '../../models/image/Image.model';
+import {LostPet} from '../../models/LostPet/LostPet.model';
+import {MyDate} from '../../utils/Date';
+import {S3} from "../../AWS/S3";
 
 const { create, deleteOne, findAll, updateOne } = Factory(Pet);
 const  {create: createLostPet, deleteOne: deleteLostPet, findAll: findAllLostPet, updateOne: updateLostPet, findOneById: findOneLosPet} = Factory(LostPet)
@@ -106,6 +105,7 @@ export class PetController {
   @use(AuthController.protect)
   @use(Multer.getInstance().upload.array('images'))
   public async uploadImage(req: Request, res: Response, next: NextFunction) {
+
     if (!req.files) {
       return next(new AppError('No files Uploaded', 404));
     }
@@ -120,14 +120,7 @@ export class PetController {
     const photosToBeUploaded = req.files.length as number;
     if (pet.photos.length + photosToBeUploaded > 3)
       return next(new AppError('You can only have 3 photos per pet', 400));
-
-
-    const images = (req.files as Array<Express.Multer.File>).map((file) => ({
-      src: file.buffer,
-      contentType: file.mimetype,
-      encoded: process.env.NODE_ENV === ENVS.DEVELOPMENT ? EEncodedTypes.BUFFER : EEncodedTypes.HTTPURL
-    }));
-    req.body = images;
+    req.body = await S3.uploadFiles(req.files as Array<Express.Multer.File>, req.user.id);
     const savedImages = await createImages()(req, res, next);
     const imagesIds = savedImages.reduce(
       (accumulator: Array<number>, currentValue: any) => {

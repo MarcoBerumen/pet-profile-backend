@@ -22,7 +22,7 @@ export class QrController {
     @use(AuthController.protect)
     public async generate (req:Request, res:Response, next: NextFunction) {
         const uuid = v4()
-        const url = `https://huellitas.com/qr/${uuid}`;
+        const url = `https://tail-spot.com/qr/${uuid}`;
         const qrCodeImage = await QRCode.toDataURL(url);
         const image = await Image.create({
             src: qrCodeImage,
